@@ -8,11 +8,19 @@
   <style>
     body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333; }
     #pictureUrl { width: 90px; border-radius: 50%; margin-top: 20px; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .order-box { margin: 30px auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 400px; background-color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    select { width: 100%; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; margin-top: 10px; }
+    .order-box { margin: 30px auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 400px; background-color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: opacity 0.3s ease; }
+    
+    select, input { width: 100%; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; margin-top: 5px; box-sizing: border-box; }
+    input[readonly] { background-color: #e9ecef; color: #666; cursor: not-allowed; }
+    
+    .input-group { margin-top: 15px; text-align: left; }
+    .input-group label { display: block; font-weight: bold; font-size: 14px; margin-bottom: 5px; color: #555; }
+    
     button { margin-top: 20px; width: 100%; padding: 12px; background-color: #06C755; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
     button:hover { background-color: #05b34c; }
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
+    .btn-secondary { background-color: #888; }
+    .btn-secondary:hover { background-color: #666; }
   </style>
 </head>
 <body>
@@ -22,86 +30,207 @@
   <img id="pictureUrl" src="" alt="Profile Picture">
   <h3 id="displayName">正在載入 LINE 身分資訊...</h3>
 
-  <div class="order-box">
-    <label style="font-weight: bold; font-size: 16px;">請選擇要代儲的遊戲：</label>
-    <select id="gameSelect">
-      <option value="傳說對決">傳說對決</option>
-      <option value="原神">原神</option>
-      <option value="崩壞：星穹鐵道">崩壞：星穹鐵道</option>
-    </select>
-    <br>
+  <!-- 第一頁：選擇遊戲、伺服器、面額 -->
+  <div id="step1" class="order-box">
+    <div class="input-group">
+      <label>第一區塊：請選擇遊戲</label>
+      <select id="gameSelect">
+        <option value="特戰英豪">特戰英豪</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>第二區塊：請選擇伺服器</label>
+      <select id="serverSelect">
+        <option value="全服">全服</option>
+        <option value="菲服">菲服</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>第三區塊：請選擇面額</label>
+      <select id="amountSelect">
+        <!-- 面額選項會透過 JS 自動載入 -->
+      </select>
+    </div>
+
+    <button onclick="goToStep2()">下一步，填寫資料</button>
+  </div>
+
+  <!-- 第二頁：動態表單 -->
+  <div id="step2" class="order-box" style="display: none;">
+    <h3 style="margin-top: 0; color: #06C755;">填寫代儲資訊</h3>
+    <p id="orderSummary" style="font-size: 14px; color: #666; font-weight: bold; margin-bottom: 20px;"></p>
+    
+    <!-- 表單內容會透過 JS 根據伺服器動態產生 -->
+    <div id="dynamicForm"></div>
+
     <button id="submitBtn" onclick="submitOrder()">確認送出訂單</button>
+    <button class="btn-secondary" onclick="backToStep1()">回上一頁修改</button>
   </div>
 
   <script>
-    // ⚠️ 填空 1：請把下方引號內換成你的真實 LINE LIFF ID
-    const myLiffId = "2010516204-8RHWuHLT";
-
-    // ⚠️ 填空 2：這是你剛剛產生出來的 Google 後端網址
-    const apiUrl = "https://script.google.com/macros/s/AKfycbyTAce-Ab1ziBxzbX_LMo3cd102KFhv_ABYBx9meo9ZpZVT1iFBNlBJjXlgBEOO28Yr/exec";
-
-    // 用來儲存 LINE 用戶資訊的全局變數
+    const myLiffId = "2010516204-8RHWuHLT"; // 你的 LIFF ID
+    const apiUrl = "https://script.google.com/macros/s/AKfycbyTAce-Ab1ziBxzbX_LMo3cd102KFhv_ABYBx9meo9ZpZVT1iFBNlBJjXlgBEOO28Yr/exec"; // 你的 Google Apps Script 網址
     let userProfile = null;
+
+    // 定義伺服器對應的面額
+    const amountOptions = {
+      "全服": ["16350VP", "13050VP", "11000VP", "9000VP", "7400VP", "5350VP", "3650VP", "2050VP", "1000VP"],
+      "菲服": ["16350VP", "13050VP", "11000VP", "9000VP", "7400VP", "5350VP", "3650VP", "2050VP", "1000VP", "6710VP", "3250VP", "1900VP", "1260VP", "600VP", "355VP"]
+    };
 
     // 初始化 LIFF 系統
     async function initializeLiff() {
       try {
         await liff.init({ liffId: myLiffId });
-        
         if (liff.isLoggedIn()) {
           userProfile = await liff.getProfile();
           document.getElementById("displayName").innerText = "你好，" + userProfile.displayName;
           document.getElementById("pictureUrl").src = userProfile.pictureUrl;
           document.getElementById("pictureUrl").style.display = "inline-block";
         } else {
-          liff.login(); // 引導用戶登入
+          liff.login();
         }
       } catch (err) {
         console.error("LIFF 初始化失敗", err);
-        document.getElementById("displayName").innerText = "系統初始化失敗，請檢查 LIFF ID 設定";
+        document.getElementById("displayName").innerText = "系統初始化失敗，請檢查網路或設定";
       }
     }
 
-    // 發送訂單到 Google 試算表
+    // 監聽伺服器切換，動態改變面額選單
+    document.getElementById("serverSelect").addEventListener("change", function() {
+      const server = this.value;
+      const amountSelect = document.getElementById("amountSelect");
+      amountSelect.innerHTML = ""; // 清空現有選項
+      
+      amountOptions[server].forEach(amount => {
+        let option = document.createElement("option");
+        option.value = amount;
+        option.text = amount;
+        amountSelect.appendChild(option);
+      });
+    });
+
+    // 手動觸發一次 change 事件，讓初始網頁載入時有預設的「全服」面額
+    document.getElementById("serverSelect").dispatchEvent(new Event('change'));
+
+    // 切換到第二頁
+    function goToStep2() {
+      const game = document.getElementById("gameSelect").value;
+      const server = document.getElementById("serverSelect").value;
+      const amount = document.getElementById("amountSelect").value;
+
+      // 更新第二頁的訂單摘要
+      document.getElementById("orderSummary").innerText = `已選：${game} | ${server} | ${amount}`;
+
+      // 根據伺服器動態產生表單
+      const formContainer = document.getElementById("dynamicForm");
+      if (server === "全服") {
+        formContainer.innerHTML = `
+          <div class="input-group">
+            <label>登入方式：</label>
+            <input type="text" id="loginMethod" value="Riot" readonly>
+          </div>
+          <div class="input-group">
+            <label>帳號：</label>
+            <input type="text" id="account" placeholder="請輸入 Riot 帳號" required>
+          </div>
+          <div class="input-group">
+            <label>密碼：</label>
+            <input type="password" id="password" placeholder="請輸入密碼" required>
+          </div>
+          <div class="input-group">
+            <label>區服：</label>
+            <input type="text" id="region" placeholder="請輸入區服" required>
+          </div>
+          <div class="input-group">
+            <label>名稱：</label>
+            <input type="text" id="characterName" placeholder="請輸入遊戲名稱" required>
+          </div>
+        `;
+      } else if (server === "菲服") {
+        formContainer.innerHTML = `
+          <div class="input-group">
+            <label>Riot ID：</label>
+            <input type="text" id="riotId" placeholder="格式如：XXX#XXX" required>
+          </div>
+        `;
+      }
+
+      // 切換顯示區塊
+      document.getElementById("step1").style.display = "none";
+      document.getElementById("step2").style.display = "block";
+    }
+
+    // 回到第一頁
+    function backToStep1() {
+      document.getElementById("step1").style.display = "block";
+      document.getElementById("step2").style.display = "none";
+    }
+
+    // 傳送資料到 Google 表單
     async function submitOrder() {
       if (!userProfile) {
         alert("尚未成功讀取 LINE 身分，無法下單！");
         return;
       }
 
-      const selectedGame = document.getElementById("gameSelect").value;
-      const submitBtn = document.getElementById("submitBtn");
+      const server = document.getElementById("serverSelect").value;
+      
+      // 打包要傳送的基礎資料結構
+      let payload = {
+        userId: userProfile.userId,
+        displayName: userProfile.displayName,
+        game: document.getElementById("gameSelect").value,
+        server: server,
+        amount: document.getElementById("amountSelect").value
+      };
+
+      // 根據表單動態抓取填寫的資料
+      if (server === "全服") {
+        payload.loginMethod = document.getElementById("loginMethod").value;
+        payload.account = document.getElementById("account").value;
+        payload.password = document.getElementById("password").value;
+        payload.region = document.getElementById("region").value;
+        payload.characterName = document.getElementById("characterName").value;
+
+        // 簡單防呆檢查
+        if(!payload.account || !payload.password || !payload.region || !payload.characterName) {
+          alert("請確認「全服」的所有欄位皆已填寫！");
+          return;
+        }
+      } else if (server === "菲服") {
+        payload.riotId = document.getElementById("riotId").value;
+        
+        // 簡單防呆檢查
+        if(!payload.riotId) {
+          alert("請填寫 Riot ID！");
+          return;
+        }
+      }
 
       // 變更按鈕狀態，防止重複點擊
+      const submitBtn = document.getElementById("submitBtn");
       submitBtn.innerText = "訂單傳送中...";
       submitBtn.disabled = true;
 
-      // 打包要傳送的資料結構
-      const payload = {
-        userId: userProfile.userId,
-        displayName: userProfile.displayName,
-        game: selectedGame
-      };
-
       try {
-        // 使用 POST 發送資料給 Google Apps Script
         await fetch(apiUrl, {
           method: "POST",
-          mode: "no-cors", // 繞過瀏覽器的跨網域限制，確保資料能順利傳入 Google
-          headers: {
-            "Content-Type": "text/plain"
-          },
+          mode: "no-cors", 
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify(payload)
         });
 
-        // 提示用戶成功
-        alert("🎉 訂單已成功送出！\n請至後台確認試算表。");
+        alert("🎉 訂單已成功送出！\n客服正在處理中，請稍候。");
+        // 送出後自動導回第一頁
+        backToStep1();
 
       } catch (error) {
         console.error("傳送過程中發生錯誤:", error);
         alert("傳送失敗，請稍後再試！");
       } finally {
-        // 還原按鈕狀態
         submitBtn.innerText = "確認送出訂單";
         submitBtn.disabled = false;
       }
@@ -110,6 +239,5 @@
     // 啟動程式
     initializeLiff();
   </script>
-
 </body>
 </html>

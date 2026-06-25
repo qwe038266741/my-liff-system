@@ -4,67 +4,110 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>阿毛快速下單系統</title>
-  <!-- 載入 LINE 官方的 LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
-    #pictureUrl { width: 100px; border-radius: 50%; margin-top: 20px; display: none; }
-    .order-box { margin-top: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; }
-    button { margin-top: 15px; padding: 10px 20px; background-color: #06C755; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+    body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333; }
+    #pictureUrl { width: 90px; border-radius: 50%; margin-top: 20px; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .order-box { margin: 30px auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 400px; background-color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    select { width: 100%; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; margin-top: 10px; }
+    button { margin-top: 20px; width: 100%; padding: 12px; background-color: #06C755; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button:hover { background-color: #05b34c; }
+    button:disabled { background-color: #cccccc; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
   <h2>歡迎來到阿毛工作室</h2>
   
-  <!-- 顯示客戶大頭貼與名字的地方 -->
   <img id="pictureUrl" src="" alt="Profile Picture">
-  <h3 id="displayName">資料讀取中...</h3>
+  <h3 id="displayName">正在載入 LINE 身分資訊...</h3>
 
-  <!-- 模擬下單區塊 -->
   <div class="order-box">
-    <label for="gameSelect">請選擇要代儲的遊戲：</label><br><br>
+    <label style="font-weight: bold; font-size: 16px;">請選擇要代儲的遊戲：</label>
     <select id="gameSelect">
       <option value="傳說對決">傳說對決</option>
       <option value="原神">原神</option>
       <option value="崩壞：星穹鐵道">崩壞：星穹鐵道</option>
     </select>
     <br>
-    <button onclick="submitOrder()">送出訂單測試</button>
+    <button id="submitBtn" onclick="submitOrder()">確認送出訂單</button>
   </div>
 
   <script>
-    // ⚠️ 這裡非常重要！請把下方引號內的文字，換成你剛剛在後台拿到的 LIFF ID
+    // ⚠️ 填空 1：請把下方引號內換成你的真實 LINE LIFF ID
     const myLiffId = "2010516204-8RHWuHLT";
 
-    // 初始化 LIFF 的主程式
+    // ⚠️ 填空 2：這是你剛剛產生出來的 Google 後端網址
+    const apiUrl = "https://script.google.com/macros/s/AKfycbyTAce-Ab1ziBxzbX_LMo3cd102KFhv_ABYBx9meo9ZpZVT1iFBNlBJjXlgBEOO28Yr/exec";
+
+    // 用來儲存 LINE 用戶資訊的全局變數
+    let userProfile = null;
+
+    // 初始化 LIFF 系統
     async function initializeLiff() {
       try {
         await liff.init({ liffId: myLiffId });
         
-        // 確認是否在 LINE 裡面開啟，並抓取資料
         if (liff.isLoggedIn()) {
-          const profile = await liff.getProfile();
-          document.getElementById("displayName").innerText = "你好，" + profile.displayName;
-          document.getElementById("pictureUrl").src = profile.pictureUrl;
+          userProfile = await liff.getProfile();
+          document.getElementById("displayName").innerText = "你好，" + userProfile.displayName;
+          document.getElementById("pictureUrl").src = userProfile.pictureUrl;
           document.getElementById("pictureUrl").style.display = "inline-block";
         } else {
-          // 如果不是在 LINE 裡面開啟，提示登入
-          liff.login();
+          liff.login(); // 引導用戶登入
         }
       } catch (err) {
         console.error("LIFF 初始化失敗", err);
-        document.getElementById("displayName").innerText = "初始化失敗，請確認 LIFF ID";
+        document.getElementById("displayName").innerText = "系統初始化失敗，請檢查 LIFF ID 設定";
       }
     }
 
-    // 模擬按下送出按鈕的動作
-    function submitOrder() {
-      const game = document.getElementById("gameSelect").value;
-      alert("你選擇了：" + game + "\n\n(未來這裡會將資料傳送到你的後端伺服器！)");
+    // 發送訂單到 Google 試算表
+    async function submitOrder() {
+      if (!userProfile) {
+        alert("尚未成功讀取 LINE 身分，無法下單！");
+        return;
+      }
+
+      const selectedGame = document.getElementById("gameSelect").value;
+      const submitBtn = document.getElementById("submitBtn");
+
+      // 變更按鈕狀態，防止重複點擊
+      submitBtn.innerText = "訂單傳送中...";
+      submitBtn.disabled = true;
+
+      // 打包要傳送的資料結構
+      const payload = {
+        userId: userProfile.userId,
+        displayName: userProfile.displayName,
+        game: selectedGame
+      };
+
+      try {
+        // 使用 POST 發送資料給 Google Apps Script
+        await fetch(apiUrl, {
+          method: "POST",
+          mode: "no-cors", // 繞過瀏覽器的跨網域限制，確保資料能順利傳入 Google
+          headers: {
+            "Content-Type": "text/plain"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        // 提示用戶成功
+        alert("🎉 訂單已成功送出！\n請至後台確認試算表。");
+
+      } catch (error) {
+        console.error("傳送過程中發生錯誤:", error);
+        alert("傳送失敗，請稍後再試！");
+      } finally {
+        // 還原按鈕狀態
+        submitBtn.innerText = "確認送出訂單";
+        submitBtn.disabled = false;
+      }
     }
 
-    // 網頁載入時執行初始化
+    // 啟動程式
     initializeLiff();
   </script>
 

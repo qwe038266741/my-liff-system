@@ -6,45 +6,277 @@
   <title>阿毛代儲🐼快速下單</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333; }
-    #pictureUrl { width: 90px; border-radius: 50%; margin-top: 20px; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .order-box { margin: 30px auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 400px; background-color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: opacity 0.3s ease; }
+    /* 全域暗黑電競風 */
+    body { 
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
+      text-align: center; 
+      padding: 0 15px 40px 15px; 
+      background-color: #0b0c10; 
+      color: #e2e8f0; 
+      margin: 0;
+    }
+
+    /* 頂部精美橫幅 (Banner) */
+    .banner-container {
+      width: 100%;
+      max-width: 440px;
+      margin: 20px auto 0 auto;
+      background: linear-gradient(135deg, #1f2833 0%, #0b0c10 100%);
+      border: 1px solid rgba(6, 199, 85, 0.2);
+      border-radius: 16px;
+      padding: 25px 20px;
+      box-sizing: border-box;
+      box-shadow: 0 0 20px rgba(6, 199, 85, 0.1);
+    }
     
-    select, input { width: 100%; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; margin-top: 5px; box-sizing: border-box; }
-    input[readonly] { background-color: #e9ecef; color: #666; cursor: not-allowed; }
+    .banner-container h2 {
+      margin: 0;
+      font-size: 24px;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-shadow: 0 0 10px rgba(6, 199, 85, 0.4);
+    }
+
+    /* LINE 身分區塊 */
+    .profile-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      gap: 12px;
+    }
+    #pictureUrl { 
+      width: 35px; 
+      height: 35px;
+      border-radius: 50%; 
+      display: none; 
+      border: 2px solid #06C755;
+    }
+    #displayName {
+      font-size: 14px;
+      color: #c5a059; /* 尊爵金 */
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* 🚦 步驟進度條 (Step Progress Bar) */
+    .progress-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 360px;
+      margin: 25px auto 10px auto;
+      position: relative;
+    }
+    .progress-bar::before {
+      content: "";
+      position: absolute;
+      top: 15px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #1f2833;
+      z-index: 1;
+    }
+    .progress-line-active {
+      position: absolute;
+      top: 15px;
+      left: 0;
+      width: 0%; /* 動態控制 */
+      height: 2px;
+      background-color: #06C755;
+      z-index: 2;
+      transition: width 0.3s ease;
+    }
+    .step {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+    }
+    .step-node {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #1f2833;
+      border: 2px solid #45a29e;
+      color: #c5a059;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 auto 8px auto;
+      transition: all 0.3s ease;
+    }
+    .step.active .step-node {
+      background-color: #0b0c10;
+      border-color: #06C755;
+      color: #06C755;
+      box-shadow: 0 0 10px rgba(6, 199, 85, 0.6);
+    }
+    .step-text {
+      font-size: 12px;
+      color: #c5a059;
+      font-weight: 600;
+    }
+    .step.active .step-text {
+      color: #ffffff;
+    }
+
+    /* 核心主卡片裝飾 */
+    .order-box { 
+      margin: 15px auto; 
+      padding: 25px 20px; 
+      border: 1px solid rgba(255, 255, 255, 0.05); 
+      border-radius: 16px; 
+      max-width: 440px; 
+      background: #151a22; 
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); 
+      box-sizing: border-box;
+    }
     
-    .input-group { margin-top: 15px; text-align: left; }
-    .input-group label { display: block; font-weight: bold; font-size: 14px; margin-bottom: 5px; color: #555; }
-    .price-hint { margin-top: 5px; font-size: 14px; color: #06C755; font-weight: bold; }
+    /* 📈 項目大圖示按鈕區塊 */
+    .game-grid {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .game-card {
+      flex: 1;
+      border: 2px solid #2d3748;
+      border-radius: 12px;
+      padding: 15px 10px;
+      cursor: pointer;
+      background: #0f1319;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .game-card:hover {
+      transform: translateY(-3px);
+      border-color: #45a29e;
+    }
+    .game-card.selected {
+      border-color: #06C755;
+      background: linear-gradient(145deg, #102a1e, #0f1319);
+      box-shadow: 0 0 15px rgba(6, 199, 85, 0.2);
+    }
+    .game-icon {
+      font-size: 32px;
+      filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+    }
+    .game-card.selected .game-icon {
+      filter: drop-shadow(0 0 8px rgba(6,199,85,0.5));
+    }
+    .game-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .game-card.selected .game-title {
+      color: #ffffff;
+    }
+
+    /* 輸入表單排版 */
+    .input-group { margin-top: 20px; text-align: left; }
+    .input-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #94a3b8; letter-spacing: 0.5px; }
     
-    button { margin-top: 20px; width: 100%; padding: 12px; background-color: #06C755; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background-color: #05b34c; }
-    button:disabled { background-color: #cccccc; cursor: not-allowed; }
-    .btn-secondary { background-color: #888; }
-    .btn-secondary:hover { background-color: #666; }
+    select, input { 
+      width: 100%; 
+      padding: 12px 15px; 
+      font-size: 15px; 
+      border-radius: 8px; 
+      background-color: #0b0c10;
+      border: 1px solid #2d3748; 
+      color: #ffffff;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: #06C755;
+      box-shadow: 0 0 10px rgba(6, 199, 85, 0.3);
+    }
+    input[readonly] { background-color: #151a22; color: #4a5568; cursor: not-allowed; border-color: #2d3748; }
+
+    .price-hint { margin-top: 8px; font-size: 15px; color: #00ff66; font-weight: 700; text-shadow: 0 0 5px rgba(0,255,102,0.2); }
+    
+    /* 按鈕美化 */
+    button { 
+      margin-top: 25px; 
+      width: 100%; 
+      padding: 14px; 
+      background: linear-gradient(90deg, #06b34c, #06C755);
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-size: 16px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      box-shadow: 0 4px 15px rgba(6, 199, 85, 0.3);
+      transition: all 0.2s ease; 
+    }
+    button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(6, 199, 85, 0.5); 
+    }
+    button:disabled { background: #2d3748; color: #4a5568; box-shadow: none; cursor: not-allowed; }
+    .btn-secondary { background: #2d3748; color: #a0aec0; margin-top: 12px; box-shadow: none; }
+    .btn-secondary:hover { background: #3a4a63; color: #ffffff; }
   </style>
 </head>
 <body>
 
-  <h2>歡迎來到🐼阿毛工作室</h2>
-  
-  <img id="pictureUrl" src="" alt="Profile Picture">
-  <h3 id="displayName">正在載入 LINE 身分資訊...</h3>
+  <!-- 1. 精美橫幅 Banner -->
+  <div class="banner-container">
+    <h2>🐼 阿毛工作室</h2>
+    <div class="profile-box">
+      <img id="pictureUrl" src="" alt="Profile Picture">
+      <h3 id="displayName">正在驗證 LINE 安全連線...</h3>
+    </div>
+  </div>
 
+  <!-- 3. 🚦 步驟進度條 -->
+  <div class="progress-bar">
+    <div class="progress-line-active" id="progressLine"></div>
+    <div class="step active" id="stepNode1">
+      <div class="step-node">1</div>
+      <div class="step-text">選擇商品</div>
+    </div>
+    <div class="step" id="stepNode2">
+      <div class="step-node">2</div>
+      <div class="step-text">填寫代儲</div>
+    </div>
+    <div class="step" id="stepNode3">
+      <div class="step-node">3</div>
+      <div class="step-text">訂單成立</div>
+    </div>
+  </div>
+
+  <!-- 第一步卡片面版 -->
   <div id="step1" class="order-box">
+    <!-- 4. 📈 項目視覺大圖示按鈕 -->
     <div class="input-group">
-      <label>請選擇遊戲/項目</label>
-      <select id="gameSelect">
-        <option value="" disabled selected>請選擇項目...</option>
-        <option value="特戰英豪">特戰英豪</option>
-        <option value="抖音">抖音</option>
-      </select>
+      <label>請選擇儲值項目</label>
+      <div class="game-grid">
+        <div class="game-card" id="cardVal" onclick="selectGameCard('特戰英豪')">
+          <div class="game-icon">🎯</div>
+          <div class="game-title">特戰英豪</div>
+        </div>
+        <div class="game-card" id="cardDy" onclick="selectGameCard('抖音')">
+          <div class="game-icon">🎵</div>
+          <div class="game-title">抖音項目</div>
+        </div>
+      </div>
     </div>
 
     <div class="input-group">
       <label>請選擇伺服器/版本</label>
       <select id="serverSelect">
-        <option value="" disabled selected>請先選擇項目...</option>
+        <option value="" disabled selected>請先點擊上方項目卡片...</option>
       </select>
     </div>
 
@@ -70,15 +302,17 @@
         <option value="街口轉帳">街口轉帳 $0</option>
         <option value="7-11條碼繳費">7-11條碼繳費 $0</option>
         <option value="全家條碼繳費">全家條碼繳費 $15</option>
+        <option value="萊爾富條碼繳費">萊爾富條碼繳費 $15</option>
       </select>
     </div>
 
     <button onclick="goToStep2()">下一步，填寫資料</button>
   </div>
 
+  <!-- 第二步卡片面版 -->
   <div id="step2" class="order-box" style="display: none;">
-    <h3 style="margin-top: 0; color: #06C755;">填寫代儲資訊</h3>
-    <p id="orderSummary" style="font-size: 14px; color: #666; font-weight: bold; margin-bottom: 20px;"></p>
+    <h3 style="margin-top: 0; color: #06C755; font-weight: 700;">填寫代儲資訊</h3>
+    <p id="orderSummary" style="font-size: 14px; color: #a0aec0; font-weight: 600; margin-bottom: 25px; line-height: 1.5; text-align: left; background: #0b0c10; padding: 12px; border-radius: 8px; border: 1px solid #2d3748;"></p>
     
     <div id="dynamicForm"></div>
 
@@ -90,8 +324,8 @@
     const myLiffId = "2010516204-8RHWuHLT"; 
     const apiUrl = "https://script.google.com/macros/s/AKfycbyTAce-Ab1ziBxzbX_LMo3cd102KFhv_ABYBx9meo9ZpZVT1iFBNlBJjXlgBEOO28Yr/exec"; 
     let userProfile = null;
+    let selectedGame = "";
 
-    // 項目與伺服器聯動設定
     const serverOptions = {
       "特戰英豪": ["全服", "菲服"],
       "抖音": ["大陸版", "國際版"]
@@ -117,7 +351,7 @@
         await liff.init({ liffId: myLiffId });
         if (liff.isLoggedIn()) {
           userProfile = await liff.getProfile();
-          document.getElementById("displayName").innerText = "你好，" + userProfile.displayName;
+          document.getElementById("displayName").innerText = "代儲尊榮會員：" + userProfile.displayName;
           document.getElementById("pictureUrl").src = userProfile.pictureUrl;
           document.getElementById("pictureUrl").style.display = "inline-block";
         } else {
@@ -125,24 +359,29 @@
         }
       } catch (err) {
         console.error("LIFF 初始化失敗", err);
-        document.getElementById("displayName").innerText = "系統初始化失敗，請檢查網路或設定";
+        document.getElementById("displayName").innerText = "安全線路初始化失敗，請重新開啟";
       }
     }
 
-    // 監聽：項目(遊戲)改變時，連動伺服器下拉選單
-    document.getElementById("gameSelect").addEventListener("change", function() {
-      const game = this.value;
+    // 點擊大圖卡選擇項目
+    function selectGameCard(game) {
+      selectedGame = game;
+      document.getElementById("cardVal").classList.remove("selected");
+      document.getElementById("cardDy").classList.remove("selected");
+      
+      if(game === "特戰英豪") document.getElementById("cardVal").classList.add("selected");
+      if(game === "抖音") document.getElementById("cardDy").classList.add("selected");
+
       const serverSelect = document.getElementById("serverSelect");
       serverSelect.innerHTML = '<option value="" disabled selected>請選擇伺服器/版本...</option>';
       document.getElementById("amountSelect").innerHTML = '<option value="" disabled selected>請先選擇伺服器...</option>';
       
-      // 隱藏自輸入框，顯示一般下拉框
       document.getElementById("amountSelectGroup").style.display = "block";
       document.getElementById("customAmountGroup").style.display = "none";
       document.getElementById("customAmountInput").value = "";
       document.getElementById("customPriceCalc").innerText = "目前金額：$0";
 
-      if (game && serverOptions[game]) {
+      if (serverOptions[game]) {
         serverOptions[game].forEach(server => {
           let option = document.createElement("option");
           option.value = server;
@@ -150,11 +389,9 @@
           serverSelect.appendChild(option);
         });
       }
-    });
+    }
 
-    // 監聽：伺服器改變時，判定切換「固定選單」或「自選數量」
     document.getElementById("serverSelect").addEventListener("change", function() {
-      const game = document.getElementById("gameSelect").value;
       const server = this.value;
       const amountSelect = document.getElementById("amountSelect");
       
@@ -162,8 +399,7 @@
       document.getElementById("customAmountInput").value = "";
       document.getElementById("customPriceCalc").innerText = "目前金額：$0";
 
-      if (game === "抖音") {
-        // 隱藏下拉選單，開啟輸入框
+      if (selectedGame === "抖音") {
         document.getElementById("amountSelectGroup").style.display = "none";
         document.getElementById("customAmountGroup").style.display = "block";
         
@@ -175,7 +411,6 @@
           document.getElementById("customAmountInput").placeholder = "例如：140, 280, 560...";
         }
       } else {
-        // 特戰英豪：顯示下拉選單
         document.getElementById("amountSelectGroup").style.display = "block";
         document.getElementById("customAmountGroup").style.display = "none";
         
@@ -187,7 +422,7 @@
             if (amount.startsWith("【")) {
               option.disabled = true;
               option.style.fontWeight = "bold"; 
-              option.style.color = "#999";
+              option.style.color = "#555";
             }
             amountSelect.appendChild(option);
           });
@@ -195,7 +430,6 @@
       }
     });
 
-    // 監聽：抖音自選數量即時價格試算
     document.getElementById("customAmountInput").addEventListener("input", function() {
       const server = document.getElementById("serverSelect").value;
       const val = parseInt(this.value) || 0;
@@ -210,111 +444,91 @@
     });
 
     function goToStep2() {
-      const game = document.getElementById("gameSelect").value;
       const server = document.getElementById("serverSelect").value;
       const payment = document.getElementById("paymentSelect").value;
       let amount = "";
 
-      if (game === "抖音") {
+      if (!selectedGame) {
+        alert("⚠️ 請先點擊大卡片選擇儲值項目！"); return;
+      }
+
+      if (selectedGame === "抖音") {
         const inputVal = parseInt(document.getElementById("customAmountInput").value) || 0;
-        if (inputVal <= 0) {
-          alert("⚠️ 請輸入正確的購買數量！");
-          return;
-        }
-        // 進行單位防呆倍數檢查
+        if (inputVal <= 0) { alert("⚠️ 請輸入正確的購買數量！"); return; }
         if (server === "大陸版") {
-          if (inputVal % 100 !== 0) {
-            alert("⚠️ 大陸版限制必須以 100 鑽石為單位遞增輸入！（例如：100, 200, 300...）");
-            return;
-          }
-          let calculatedPrice = (inputVal / 100) * 50;
-          amount = `${inputVal}鑽石 = $${calculatedPrice}`;
+          if (inputVal % 100 !== 0) { alert("⚠️ 大陸版限制必須以 100 鑽石為單位遞增輸入！"); return; }
+          amount = `${inputVal}鑽石 = $${(inputVal / 100) * 50}`;
         } else if (server === "國際版") {
-          if (inputVal % 140 !== 0) {
-            alert("⚠️ 國際版限制必須以 140 金幣為單位遞增輸入！（例如：140, 280, 420...）");
-            return;
-          }
-          let calculatedPrice = (inputVal / 140) * 50;
-          amount = `${inputVal}金幣 = $${calculatedPrice}`;
+          if (inputVal % 140 !== 0) { alert("⚠️ 國際版限制必須以 140 金幣為單位遞增輸入！"); return; }
+          amount = `${inputVal}金幣 = $${(inputVal / 140) * 50}`;
         }
       } else {
         amount = document.getElementById("amountSelect").value;
       }
 
-      if (!game || !server || !amount || !payment) {
-        alert("⚠️ 請確認所有選項和面額皆已選擇/填寫完整！");
-        return;
+      if (!server || !amount || !payment) {
+        alert("⚠️ 請確認所有選項和面額皆已填寫完整！"); return;
       }
 
-      document.getElementById("orderSummary").innerText = `已選：${game} | ${server} | ${amount} | ${payment}`;
+      // 更新進度條視覺
+      document.getElementById("progressLine").style.width = "50%";
+      document.getElementById("stepNode2").classList.add("active");
+
+      document.getElementById("orderSummary").innerHTML = `🛒 <b>項目：</b>${selectedGame}<br>🌍 <b>版本：</b>${server}<br>💎 <b>面額：</b>${amount}<br>💳 <b>支付：</b>${payment}`;
       const formContainer = document.getElementById("dynamicForm");
       
-      // 動態產生 Step 2 填寫區
-      if (game === "特戰英豪") {
+      if (selectedGame === "特戰英豪") {
         if (server === "全服") {
           formContainer.innerHTML = `
-            <div class="input-group"><label>登入方式：</label><input type="text" id="loginMethod" value="Riot" readonly></div>
-            <div class="input-group"><label>帳號：</label><input type="text" id="account" placeholder="請輸入 Riot 帳號"></div>
-            <div class="input-group"><label>密碼：</label><input type="text" id="password" placeholder="請輸入密碼"></div>
-            <div class="input-group"><label>區服：</label><input type="text" id="region" placeholder="請輸入區服"></div>
-            <div class="input-group"><label>名稱：</label><input type="text" id="characterName" placeholder="請輸入遊戲名稱"></div>
+            <div class="input-group"><label>登入方式</label><input type="text" id="loginMethod" value="Riot" readonly></div>
+            <div class="input-group"><label>帳號</label><input type="text" id="account" placeholder="請輸入 Riot 帳號"></div>
+            <div class="input-group"><label>密碼</label><input type="text" id="password" placeholder="請輸入密碼"></div>
+            <div class="input-group"><label>區服</label><input type="text" id="region" placeholder="請輸入區服"></div>
+            <div class="input-group"><label>名稱</label><input type="text" id="characterName" placeholder="請輸入遊戲名稱"></div>
           `;
         } else if (server === "菲服") {
           if (serialAmounts.includes(amount)) {
             formContainer.innerHTML = `
-              <div style="padding: 20px 0; color: #666; font-size: 15px; line-height: 1.6;">
-                📦 您所選擇的是<b style="color: #ff9800;">【序號商品】</b>。<br>
-                此商品不需填寫任何遊戲帳密或 Riot ID！<br>
-                請直接點擊下方按鈕送出訂單，由客服向您發送支付方式。
+              <div style="padding: 15px; color: #a0aec0; font-size: 14px; line-height: 1.6; background:#0b0c10; border-radius:8px; border:1px dashed #4a5568;">
+                📦 您選擇的是 <b style="color: #ff9800;">【序號商品】</b>。<br>
+                免填遊戲帳密或 Riot ID！<br>
+                請點下方按鈕送出，由客服發送支付方式。
               </div>
             `;
           } else {
             formContainer.innerHTML = `
-              <div class="input-group"><label>Riot ID：</label><input type="text" id="riotId" placeholder="格式如：XXX#XXX"></div>
+              <div class="input-group"><label>Riot ID</label><input type="text" id="riotId" placeholder="格式如：XXX#XXX"></div>
             `;
           }
         }
-      } else if (game === "抖音") {
+      } else if (selectedGame === "抖音") {
         if (server === "大陸版") {
           formContainer.innerHTML = `
-            <div class="input-group">
-              <label>抖音號：</label>
-              <input type="text" id="douyinId" placeholder="請輸入您的大陸版抖音號">
-            </div>
+            <div class="input-group"><label>抖音號</label><input type="text" id="douyinId" placeholder="請輸入您的大陸版抖音號"></div>
           `;
         } else if (server === "國際版") {
           formContainer.innerHTML = `
-            <div class="input-group">
-              <label>綁定電子信箱：</label>
-              <input type="text" id="douyinEmail" placeholder="請輸入 TikTok 綁定信箱">
-            </div>
-            <div class="input-group">
-              <label>密碼：</label>
-              <input type="text" id="douyinPassword" placeholder="請輸入 TikTok 密碼">
-            </div>
+            <div class="input-group"><label>綁定電子信箱</label><input type="text" id="douyinEmail" placeholder="請輸入 TikTok 綁定信箱"></div>
+            <div class="input-group"><label>密碼</label><input type="text" id="douyinPassword" placeholder="請輸入 TikTok 密碼"></div>
           `;
         }
       }
 
-      // 用來暫存給送出階段讀取的值
       formContainer.dataset.resolvedAmount = amount;
-
       document.getElementById("step1").style.display = "none";
       document.getElementById("step2").style.display = "block";
     }
 
     function backToStep1() {
+      document.getElementById("progressLine").style.width = "0%";
+      document.getElementById("stepNode2").classList.remove("active");
       document.getElementById("step1").style.display = "block";
       document.getElementById("step2").style.display = "none";
     }
 
     async function submitOrder() {
-      if (!userProfile) {
-        alert("尚未成功讀取 LINE 身分，無法下單！");
-        return;
-      }
+      if (!userProfile) { alert("尚未成功讀取 LINE 身分，無法下單！"); return; }
 
-      const game = document.getElementById("gameSelect").value;
       const server = document.getElementById("serverSelect").value;
       const formContainer = document.getElementById("dynamicForm");
       const amount = formContainer.dataset.resolvedAmount;
@@ -322,14 +536,13 @@
       let payload = {
         userId: userProfile.userId,
         displayName: userProfile.displayName,
-        game: game,
+        game: selectedGame,
         server: server,
         amount: amount,
         payment: document.getElementById("paymentSelect").value
       };
 
-      // 根據項目收集並檢查參數
-      if (game === "特戰英豪") {
+      if (selectedGame === "特戰英豪") {
         if (server === "全服") {
           payload.loginMethod = document.getElementById("loginMethod").value;
           payload.account = document.getElementById("account").value.trim();
@@ -348,11 +561,11 @@
             payload.riotId = "購買序號商品";
           }
         }
-      } else if (game === "抖音") {
+      } else if (selectedGame === "抖音") {
         if (server === "大陸版") {
           var douyinId = document.getElementById("douyinId").value.trim();
           if(!douyinId) { alert("⚠️ 請填寫抖音號！"); return; }
-          payload.account = douyinId; // 將抖音號存入帳號欄位，以便試算表整齊
+          payload.account = douyinId; 
           payload.loginMethod = "抖音號充值";
         } else if (server === "國際版") {
           var email = document.getElementById("douyinEmail").value.trim();
@@ -365,7 +578,7 @@
       }
 
       const submitBtn = document.getElementById("submitBtn");
-      submitBtn.innerText = "訂單傳送中...";
+      submitBtn.innerText = "加密傳送中...";
       submitBtn.disabled = true;
 
       try {
@@ -376,7 +589,15 @@
           body: JSON.stringify(payload)
         });
 
+        document.getElementById("progressLine").style.width = "100%";
+        document.getElementById("stepNode3").classList.add("active");
+
         alert("🎉 訂單已成功送出！\n客服正在處理中，請稍候。");
+        
+        // 成功後將進度條與卡片初始化
+        document.getElementById("progressLine").style.width = "0%";
+        document.getElementById("stepNode2").classList.remove("active");
+        document.getElementById("stepNode3").classList.remove("active");
         backToStep1();
 
       } catch (error) {

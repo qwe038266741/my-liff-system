@@ -126,6 +126,7 @@
         <option value="" disabled selected>請選擇項目...</option>
         <option value="特戰英豪">特戰英豪</option>
         <option value="抖音">抖音</option>
+        <option value="Steam點數卡">Steam點數卡</option>
       </select>
     </div>
 
@@ -182,7 +183,8 @@
 
     const serverOptions = {
       "特戰英豪": ["全服", "菲服"],
-      "抖音": ["大陸版", "國際版"]
+      "抖音": ["大陸版", "國際版"],
+      "Steam點數卡": ["無須選擇"]
     };
 
     const amountOptions = {
@@ -195,6 +197,10 @@
         "9000VP = $2200", "7400VP = $1800", "5350VP = $1300", "3650VP = $1000", 
         "2050VP = $600", "1000VP = $300", "475VP = $150",
         "【 序號 】", "6710VP = $1450", "3250VP = $800", "1900VP = $500", "1260VP = $350", "600VP = $200", "355VP = $150"
+      ],
+      "無須選擇": [
+        "2000點 = $2200", "1000點 = $1100", "800點 = $880", "500點 = $550", 
+        "400點 = $440", "300點 = $330", "200點 = $220", "150點 = $165", "100點 = $110"
       ]
     };
 
@@ -235,6 +241,12 @@
           option.text = server;
           serverSelect.appendChild(option);
         });
+        
+        // 如果該遊戲只有一個伺服器選項（例如 Steam點數卡），自動幫客戶選好並觸發變更
+        if (serverOptions[game].length === 1) {
+          serverSelect.value = serverOptions[game][0];
+          serverSelect.dispatchEvent(new Event('change'));
+        }
       }
     });
 
@@ -270,7 +282,7 @@
             if (amount.startsWith("【")) {
               option.disabled = true;
               option.style.fontWeight = "bold"; 
-              option.style.color = "#555"; /* 微調暗黑版標題顏色 */
+              option.style.color = "#555"; 
             }
             amountSelect.appendChild(option);
           });
@@ -374,6 +386,15 @@
             </div>
           `;
         }
+      } else if (game === "Steam點數卡") {
+        // Steam 點數卡 UI 完美比照特戰菲服序號
+        formContainer.innerHTML = `
+          <div style="padding: 15px; color: #a0aec0; font-size: 14px; line-height: 1.6; background:#1a1f29; border-radius:8px; border:1px dashed #4a5568;">
+            📦 您選擇的是 <b style="color: #ff9800;">【Steam 點數卡序號】</b>。<br>
+            免填遊戲帳密或 ID！<br>
+            請點下方按鈕送出，由客服為您發送。
+          </div>
+        `;
       }
 
       formContainer.dataset.resolvedAmount = amount;
@@ -439,6 +460,10 @@
           payload.password = pwd;
           payload.loginMethod = "信箱登入";
         }
+      } else if (game === "Steam點數卡") {
+        // Steam 點數卡免填任何資料，直接把序號標記塞進 Payload
+        payload.loginMethod = "Steam序號發放";
+        payload.account = "購買序號商品";
       }
 
       const submitBtn = document.getElementById("submitBtn");
@@ -468,4 +493,4 @@
     initializeLiff();
   </script>
 </body>
-</html>  
+</html>

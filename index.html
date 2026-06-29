@@ -510,7 +510,11 @@
         });
 
         alert("🎉 訂單已成功送出！\n客服正在處理中，請稍候。");
-        backToStep1();
+        if (liff.isInClient()) {
+          liff.closeWindow(); // 在 LINE App 內：關閉 LIFF，回到聊天視窗
+        } else {
+          backToStep1();      // 瀏覽器測試時：回到下單第一頁
+        }
 
       } catch (error) {
         console.error("傳送過程中發生錯誤:", error);

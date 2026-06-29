@@ -128,6 +128,7 @@
         <option value="特戰英豪">特戰英豪</option>
         <option value="抖音">抖音</option>
         <option value="Steam點數卡">Steam點數卡</option>
+        <option value="YouTube Premium">YouTube Premium</option>
       </select>
     </div>
 
@@ -193,7 +194,8 @@
     const serverOptions = {
       "特戰英豪": ["全服", "菲服"],
       "抖音": ["大陸版", "國際版"],
-      "Steam點數卡": ["無須選擇"]
+      "Steam點數卡": ["無須選擇"],
+      "YouTube Premium": ["年繳方案"]
     };
 
     const amountOptions = {
@@ -210,6 +212,9 @@
       "無須選擇": [
         "2000點 = $2200", "1000點 = $1100", "800點 = $880", "500點 = $550", 
         "400點 = $440", "300點 = $330", "200點 = $220", "150點 = $165", "100點 = $110"
+      ],
+      "年繳方案": [
+        "一年 = $1500"
       ]
     };
 
@@ -404,6 +409,13 @@
             請點下方按鈕送出，由客服為您發送。
           </div>
         `;
+      } else if (game === "YouTube Premium") {
+        formContainer.innerHTML = `
+          <div class="input-group"><label>登入方式</label><input type="text" id="loginMethod" value="Google" readonly></div>
+          <div class="input-group"><label>帳號</label><input type="text" id="account" placeholder="請輸入Google帳號"></div>
+          <div class="input-group"><label>密碼</label><input type="text" id="password" placeholder="請輸入Google密碼"></div>
+          <div class="input-group"><label>備用碼</label><input type="text" id="backupCode" placeholder="請輸入任何一組 8 位數備用碼"></div>
+        `;
       }
 
       formContainer.dataset.resolvedAmount = amount;
@@ -474,6 +486,15 @@
         // Steam 點數卡免填任何資料，直接把序號標記塞進 Payload
         payload.loginMethod = "Steam序號發放";
         payload.account = "購買序號商品";
+      } else if (game === "YouTube Premium") {
+        payload.loginMethod = document.getElementById("loginMethod").value;
+        payload.account = document.getElementById("account").value.trim();
+        payload.password = document.getElementById("password").value.trim();
+        payload.backupCode = document.getElementById("backupCode").value.trim();
+
+        if(!payload.account || !payload.password || !payload.backupCode) {
+          alert("⚠️ 請確認所有欄位皆已填寫完整！"); return;
+        }
       }
 
       const submitBtn = document.getElementById("submitBtn");

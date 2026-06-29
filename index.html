@@ -118,6 +118,7 @@
   
   <img id="pictureUrl" src="" alt="Profile Picture">
   <h3 id="displayName">正在載入 LINE 身分資訊...</h3>
+  <button id="historyEntryBtn" onclick="showHistory()" style="width:auto; padding:8px 20px; margin-top:0; margin-bottom:10px; background:#2d3748; color:#a0aec0; box-shadow:none; font-size:13px;">📜 歷史訂單</button>
 
   <div id="step1" class="order-box">
     <div class="input-group">
@@ -174,6 +175,14 @@
 
     <button id="submitBtn" onclick="submitOrder()">確認送出訂單</button>
     <button class="btn-secondary" onclick="backToStep1()">回上一頁修改</button>
+  </div>
+
+  <div id="historyPage" class="order-box" style="display: none;">
+    <h3 style="margin-top: 0; color: #06C755; font-weight: 700;">📜 歷史訂單</h3>
+    <div id="historyList" style="text-align:left;">
+      <p style="color:#a0aec0; font-size:14px;">載入中...</p>
+    </div>
+    <button class="btn-secondary" onclick="backToStep1()">返回首頁</button>
   </div>
 
   <script>
@@ -405,6 +414,7 @@
     function backToStep1() {
       document.getElementById("step1").style.display = "block";
       document.getElementById("step2").style.display = "none";
+      document.getElementById("historyPage").style.display = "none";
     }
 
     async function submitOrder() {
@@ -487,6 +497,52 @@
       } finally {
         submitBtn.innerText = "確認送出訂單";
         submitBtn.disabled = false;
+      }
+    }
+
+    async function showHistory() {
+      if (!userProfile) {
+        alert("尚未成功讀取 LINE 身分，無法查詢歷史訂單！");
+        return;
+      }
+
+      document.getElementById("step1").style.display = "none";
+      document.getElementById("step2").style.display = "none";
+      document.getElementById("historyPage").style.display = "block";
+
+      var listEl = document.getElementById("historyList");
+      listEl.innerHTML = `<p style="color:#a0aec0; font-size:14px;">載入中...</p>`;
+
+      try {
+        var res = await fetch(apiUrl + "?userId=" + encodeURIComponent(userProfile.userId), {
+          method: "GET"
+        });
+        var data = await res.json();
+
+        if (data.status !== "success") {
+          listEl.innerHTML = `<p style="color:#ff6b6b; font-size:14px;">查詢失敗，請稍後再試。</p>`;
+          return;
+        }
+
+        if (!data.orders || data.orders.length === 0) {
+          listEl.innerHTML = `<p style="color:#a0aec0; font-size:14px;">目前還沒有任何訂單紀錄。</p>`;
+          return;
+        }
+
+        listEl.innerHTML = data.orders.map(function (order) {
+          return `
+            <div style="padding:14px; margin-bottom:10px; background:#1a1f29; border-radius:8px; border:1px solid #2d3748;">
+              <div style="color:#718096; font-size:12px; margin-bottom:6px;">${order.time}</div>
+              <div style="color:#ffffff; font-weight:700; margin-bottom:4px;">${order.game}　${order.server}</div>
+              <div style="color:#a0aec0; font-size:14px;">面額：${order.amount}</div>
+              <div style="color:#a0aec0; font-size:14px;">支付方式：${order.payment}</div>
+            </div>
+          `;
+        }).join("");
+
+      } catch (error) {
+        console.error("查詢歷史訂單發生錯誤：", error);
+        listEl.innerHTML = `<p style="color:#ff6b6b; font-size:14px;">查詢失敗，請檢查網路連線後再試一次。</p>`;
       }
     }
 

@@ -2,118 +2,196 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>阿毛代儲🐼快速下單</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { 
-      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
-      text-align: center; 
-      padding: 20px; 
-      background-color: #0f1115; 
-      color: #e2e8f0; 
+    :root {
+      --tint: #06C755;
+      --tint-dim: #0a7a3a;
+      --bg: #000000;
+      --grouped-bg: #1c1c1e;
+      --elevated-bg: #2c2c2e;
+      --elevated-bg-2: #3a3a3c;
+      --separator: rgba(84,84,88,0.48);
+      --label: #f5f5f7;
+      --label-secondary: #98989f;
+      --label-tertiary: #636366;
+      --nav-h: 52px;
+      --tabbar-h: 58px;
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --spring: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-align: center;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--label);
       margin: 0;
     }
-    h2 {
-      color: #ffffff;
-      font-weight: 700;
-      letter-spacing: 1px;
-      margin-top: 20px;
-      text-shadow: 0 0 10px rgba(6, 199, 85, 0.2);
+
+    /* ===== iOS 導覽列 ===== */
+    .ios-navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: calc(10px + var(--sat)) 16px 10px;
+      min-height: calc(var(--nav-h) + var(--sat));
+      background: rgba(28,28,30,0.78);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid var(--separator);
     }
-    #pictureUrl { 
-      width: 85px; 
-      height: 85px;
-      border-radius: 50%; 
-      margin-top: 15px; 
-      display: none; 
-      border: 3px solid #06C755;
-      box-shadow: 0 0 15px rgba(6, 199, 85, 0.4); 
+    .ios-navbar img#pictureUrl {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: none;
+      border: 1.5px solid var(--tint);
+      flex-shrink: 0;
+    }
+    .ios-navbar-text { text-align: left; overflow: hidden; }
+    .ios-navbar-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--label);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #displayName {
-      font-size: 16px;
-      color: #a0aec0;
+      font-size: 12px;
+      color: var(--label-secondary);
       font-weight: 500;
-      margin-top: 10px;
-      margin-bottom: 10px;
+      margin: 1px 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* 頂部快捷按鈕列 */
+    .ios-content {
+      padding: 16px 16px calc(var(--tabbar-h) + var(--sab) + 24px);
+      max-width: 420px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    /* ===== iOS 底部 Tab Bar（沿用 .top-btn 供 JS 相容） ===== */
     .top-btn-row {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 100;
       display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
+      justify-content: space-around;
+      align-items: stretch;
+      gap: 0;
+      margin: 0;
+      padding: 6px 8px calc(6px + var(--sab));
+      background: rgba(28,28,30,0.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-top: 0.5px solid var(--separator);
     }
     .top-btn {
       width: auto !important;
-      padding: 8px 18px !important;
+      flex: 1;
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 4px 4px !important;
       margin-top: 0 !important;
-      font-size: 13px !important;
-      background: #2d3748 !important;
-      color: #a0aec0 !important;
+      font-size: 10.5px !important;
+      font-weight: 600;
+      background: transparent !important;
+      color: var(--label-tertiary) !important;
       box-shadow: none !important;
-      border-radius: 20px !important;
+      border-radius: 10px !important;
+      transition: transform 0.15s var(--spring), color 0.2s ease;
     }
-    .top-btn:hover { background: #3a4a63 !important; color: #ffffff !important; }
-    .top-btn.active { background: #06C755 !important; color: #fff !important; }
+    .top-btn .tab-icon { width: 24px; height: 24px; display: block; }
+    .top-btn .tab-icon svg { width: 100%; height: 100%; }
+    .top-btn:hover { background: transparent !important; color: var(--label-tertiary) !important; }
+    .top-btn:active { transform: scale(0.9); }
+    .top-btn.active { background: transparent !important; color: var(--tint) !important; }
 
-    .order-box { 
-      margin: 20px auto; 
-      padding: 30px 25px; 
-      border: 1px solid rgba(255, 255, 255, 0.08); 
-      border-radius: 16px; 
-      max-width: 420px; 
-      background: linear-gradient(145deg, #161920, #1a1f29); 
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); 
+    .order-box {
+      margin: 0 auto 16px;
+      padding: 18px 16px;
+      border: 0.5px solid var(--separator);
+      border-radius: 20px;
+      max-width: 420px;
+      background: var(--grouped-bg);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.35);
       box-sizing: border-box;
     }
-    .input-group { margin-top: 20px; text-align: left; }
-    .input-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #94a3b8; letter-spacing: 0.5px; }
-    select, input { 
-      width: 100%; 
-      padding: 12px 15px; 
-      font-size: 15px; 
-      border-radius: 8px; 
-      background-color: #0f1115;
-      border: 1px solid #2d3748; 
-      color: #ffffff;
-      transition: all 0.3s ease;
+    .input-group { margin-top: 16px; text-align: left; }
+    .input-group:first-child { margin-top: 0; }
+    .input-group label { display: block; font-weight: 600; font-size: 12.5px; margin-bottom: 7px; color: var(--label-secondary); letter-spacing: 0.2px; }
+    select, input {
+      width: 100%;
+      padding: 13px 14px;
+      font-size: 15px;
+      border-radius: 12px;
+      background-color: var(--elevated-bg);
+      border: 0.5px solid var(--separator);
+      color: var(--label);
+      font-family: inherit;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
       box-sizing: border-box;
       outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398989f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 18px;
+      padding-right: 38px;
     }
     select:focus, input:focus {
-      border-color: #06C755;
-      box-shadow: 0 0 10px rgba(6, 199, 85, 0.3);
+      border-color: var(--tint);
+      box-shadow: 0 0 0 3.5px rgba(6, 199, 85, 0.22);
     }
-    input[readonly] { background-color: #1a1f29; color: #718096; cursor: not-allowed; border-color: #2d3748; }
-    input[readonly]:focus { border-color: #2d3748; box-shadow: none; }
-    .price-hint { margin-top: 8px; font-size: 15px; color: #00ff66; font-weight: 700; text-shadow: 0 0 5px rgba(0,255,102,0.2); }
-    button { 
-      margin-top: 25px; 
-      width: 100%; 
-      padding: 14px; 
-      background: linear-gradient(90deg, #06b34c, #06C755);
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      font-size: 16px; 
-      font-weight: 700; 
-      cursor: pointer; 
-      box-shadow: 0 4px 15px rgba(6, 199, 85, 0.3);
-      transition: all 0.2s ease; 
+    input[readonly] { background-color: var(--grouped-bg); color: var(--label-tertiary); cursor: not-allowed; border-color: var(--separator); }
+    input[readonly]:focus { border-color: var(--separator); box-shadow: none; }
+    .price-hint { margin-top: 8px; font-size: 15px; color: #30d158; font-weight: 700; }
+    button {
+      margin-top: 22px;
+      width: 100%;
+      padding: 14px;
+      background: var(--tint);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(6, 199, 85, 0.25);
+      transition: transform 0.15s var(--spring), opacity 0.15s ease, box-shadow 0.15s ease;
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(6, 199, 85, 0.5); }
-    button:active { transform: translateY(1px); }
-    button:disabled { background: #2d3748; color: #4a5568; box-shadow: none; cursor: not-allowed; transform: none; }
-    .btn-secondary { background: #2d3748; color: #a0aec0; margin-top: 12px; box-shadow: none; }
-    .btn-secondary:hover { background: #3a4a63; color: #ffffff; box-shadow: none; }
+    button:active { transform: scale(0.97); opacity: 0.9; box-shadow: 0 1px 4px rgba(6, 199, 85, 0.2); }
+    button:disabled { background: var(--elevated-bg-2); color: var(--label-tertiary); box-shadow: none; cursor: not-allowed; transform: none; opacity: 1; }
+    .btn-secondary { background: var(--elevated-bg); color: var(--label-secondary); margin-top: 10px; box-shadow: none; }
+    .btn-secondary:active { background: var(--elevated-bg-2); color: var(--label); transform: scale(0.97); }
 
     /* 進度條 */
     .progress-bar-wrap {
       max-width: 420px;
-      margin: 0 auto 4px;
+      margin: 0 auto 18px;
       display: none;
     }
     .progress-steps {
@@ -130,88 +208,97 @@
       flex: 1;
     }
     .step-circle {
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #1e2533;
-      border: 2px solid #2d3748;
-      color: #4a5568;
-      font-size: 14px;
+      background: var(--elevated-bg);
+      border: 1.5px solid var(--separator);
+      color: var(--label-tertiary);
+      font-size: 13px;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       z-index: 1;
-      transition: all 0.35s ease;
+      transition: all 0.35s var(--spring);
     }
     .step-circle.done {
-      background: #06C755;
-      border-color: #06C755;
+      background: var(--tint);
+      border-color: var(--tint);
       color: #fff;
-      box-shadow: 0 0 10px rgba(6,199,85,0.5);
     }
     .step-circle.active {
-      background: #0f1115;
-      border-color: #06C755;
-      color: #06C755;
-      box-shadow: 0 0 12px rgba(6,199,85,0.35);
+      background: var(--grouped-bg);
+      border-color: var(--tint);
+      color: var(--tint);
+      box-shadow: 0 0 0 4px rgba(6,199,85,0.15);
     }
     .step-label {
-      font-size: 11px;
+      font-size: 10.5px;
       margin-top: 6px;
-      color: #4a5568;
+      color: var(--label-tertiary);
       font-weight: 600;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       transition: color 0.35s;
       white-space: nowrap;
     }
-    .step-label.active { color: #06C755; }
+    .step-label.active { color: var(--tint); }
     .step-label.done { color: #a0e6c0; }
     .progress-line {
       flex: 1;
       height: 2px;
-      background: #2d3748;
-      margin-bottom: 20px;
+      background: var(--separator);
+      margin-bottom: 18px;
       position: relative;
       overflow: hidden;
+      border-radius: 1px;
     }
     .progress-line-fill {
       height: 100%;
-      background: #06C755;
+      background: var(--tint);
       width: 0%;
       transition: width 0.4s ease;
-      box-shadow: 0 0 6px rgba(6,199,85,0.6);
     }
 
-    /* 錢包區塊樣式 */
+    /* 錢包區塊樣式：仿 Apple Wallet 卡片 */
     .wallet-balance-card {
-      background: linear-gradient(135deg, #064e26, #0a7a3a);
-      border-radius: 14px;
-      padding: 24px 20px;
-      margin-bottom: 20px;
-      text-align: center;
-      border: 1px solid rgba(6,199,85,0.3);
-      box-shadow: 0 4px 20px rgba(6,199,85,0.15);
+      background: linear-gradient(135deg, #0a7a3a 0%, #05532a 60%, #033d1e 100%);
+      border-radius: 20px;
+      padding: 22px 20px;
+      margin-bottom: 18px;
+      text-align: left;
+      border: 0.5px solid rgba(6,199,85,0.35);
+      box-shadow: 0 10px 26px rgba(6,199,85,0.18), 0 1px 0 rgba(255,255,255,0.08) inset;
+      position: relative;
+      overflow: hidden;
     }
-    .wallet-balance-label { font-size: 13px; color: #a0e6c0; margin-bottom: 8px; letter-spacing: 1px; }
-    .wallet-balance-amount { font-size: 42px; font-weight: 800; color: #ffffff; letter-spacing: 2px; }
-    .wallet-balance-unit { font-size: 18px; color: #a0e6c0; margin-left: 4px; }
+    .wallet-balance-card::after {
+      content: "";
+      position: absolute;
+      top: -60%; right: -30%;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+      pointer-events: none;
+    }
+    .wallet-balance-label { font-size: 12px; color: #a0e6c0; margin-bottom: 6px; letter-spacing: 1px; font-weight: 600; }
+    .wallet-balance-amount { font-size: 40px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
+    .wallet-balance-unit { font-size: 16px; color: #a0e6c0; margin-left: 4px; }
 
     .wallet-section-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      color: #718096;
-      letter-spacing: 1px;
+      color: var(--label-tertiary);
+      letter-spacing: 0.8px;
       text-align: left;
-      margin: 20px 0 10px;
+      margin: 22px 0 10px;
       text-transform: uppercase;
     }
 
     .topup-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 5px;
     }
     .topup-btn {
@@ -219,57 +306,104 @@
       padding: 12px 5px;
       font-size: 14px;
       font-weight: 700;
-      background: #1a1f29;
-      border: 1px solid #2d3748;
-      color: #e2e8f0;
-      border-radius: 10px;
+      background: var(--elevated-bg);
+      border: 1px solid var(--separator);
+      color: var(--label);
+      border-radius: 12px;
       box-shadow: none;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: transform 0.15s var(--spring), border-color 0.2s, background 0.2s;
     }
-    .topup-btn:hover { border-color: #06C755; color: #06C755; background: #1a1f29; box-shadow: none; transform: none; }
-    .topup-btn.selected { border-color: #06C755; color: #06C755; background: rgba(6,199,85,0.08); box-shadow: none; transform: none; }
+    .topup-btn:active { transform: scale(0.95); }
+    .topup-btn.selected { border-color: var(--tint); color: var(--tint); background: rgba(6,199,85,0.1); box-shadow: none; }
+
+    /* 儲值按鈕：金額 + 贈金 雙行顯示 */
+    .topup-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 5px 9px;
+    }
+    .topup-btn .amt { font-size: 15px; font-weight: 800; line-height: 1; }
+    .topup-btn .bonus { font-size: 10.5px; font-weight: 700; color: #06C755; line-height: 1; }
+    .topup-btn.selected .bonus { color: #a0e6c0; }
+
+    /* 頂部回饋提示 */
+    .topup-bonus-hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(6,199,85,0.08);
+      border: 1px solid rgba(6,199,85,0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .topup-bonus-hint .bonus-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+    .topup-bonus-hint .bonus-text { font-size: 13px; color: #a0e6c0; line-height: 1.5; }
+    .topup-bonus-hint .bonus-text b { color: #00ff66; }
+
+    /* 即時試算：實際入帳金額 */
+    .topup-preview {
+      display: none;
+      margin-top: 10px;
+      padding: 11px 14px;
+      background: var(--elevated-bg);
+      border: 0.5px solid var(--separator);
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--label-secondary);
+      text-align: left;
+    }
+    .topup-preview.show { display: block; }
+    .topup-preview .final { color: #30d158; font-weight: 800; font-size: 15px; }
 
     .tx-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 13px 0;
-      border-bottom: 1px solid #1e2533;
+      padding: 13px 2px;
+      border-bottom: 0.5px solid var(--separator);
     }
     .tx-item:last-child { border-bottom: none; }
     .tx-left { text-align: left; }
-    .tx-desc { font-size: 14px; color: #e2e8f0; font-weight: 600; }
-    .tx-time { font-size: 12px; color: #4a5568; margin-top: 3px; }
+    .tx-desc { font-size: 14px; color: var(--label); font-weight: 600; }
+    .tx-time { font-size: 12px; color: var(--label-tertiary); margin-top: 3px; }
     .tx-amount { font-size: 16px; font-weight: 800; }
-    .tx-amount.credit { color: #06C755; }
-    .tx-amount.debit { color: #fc8181; }
+    .tx-amount.credit { color: #30d158; }
+    .tx-amount.debit { color: #ff6b6b; }
 
     /* 餘額不足警示 */
     .balance-warning {
-      background: rgba(252,129,74,0.1);
-      border: 1px solid rgba(252,129,74,0.4);
-      border-radius: 8px;
+      background: rgba(255,159,10,0.12);
+      border: 0.5px solid rgba(255,159,10,0.4);
+      border-radius: 12px;
       padding: 12px 15px;
       font-size: 13px;
-      color: #fca274;
+      color: #ffb454;
       text-align: left;
       margin-top: 10px;
       display: none;
     }
+
+    ::-webkit-scrollbar { display: none; }
+    html { scrollbar-width: none; }
   </style>
 </head>
 <body>
 
-  <h2>歡迎來到🐼阿毛代儲</h2>
-  <img id="pictureUrl" src="" alt="Profile Picture">
-  <h3 id="displayName">正在載入 LINE 身分資訊...</h3>
-
-  <div class="top-btn-row">
-    <button class="top-btn" onclick="showPage('step1')">快速下單</button>
-    <button class="top-btn" onclick="showPage('walletPage')">我的錢包</button>
-    <button class="top-btn" onclick="showPage('historyPage')">歷史訂單</button>
+  <div class="ios-navbar">
+    <img id="pictureUrl" src="" alt="Profile Picture">
+    <div class="ios-navbar-text">
+      <div class="ios-navbar-title">🐼 阿毛代儲</div>
+      <h3 id="displayName">正在載入 LINE 身分資訊...</h3>
+    </div>
   </div>
+
+  <div class="ios-content">
 
   <!-- 進度條（只在下單流程顯示） -->
   <div class="progress-bar-wrap" id="progressBarWrap">
@@ -360,17 +494,25 @@
     </div>
 
     <div class="wallet-section-title">儲值申請</div>
+    <div class="topup-bonus-hint">
+      <span class="bonus-icon">🎁</span>
+      <span class="bonus-text">儲值就送！加碼 <b>1% 回饋金</b>，儲越多送越多，回饋直接加進錢包餘額</span>
+    </div>
     <div class="topup-grid">
-      <button class="topup-btn" onclick="selectTopup(this, 100)">$100</button>
-      <button class="topup-btn" onclick="selectTopup(this, 200)">$200</button>
-      <button class="topup-btn" onclick="selectTopup(this, 300)">$300</button>
-      <button class="topup-btn" onclick="selectTopup(this, 500)">$500</button>
-      <button class="topup-btn" onclick="selectTopup(this, 1000)">$1000</button>
-      <button class="topup-btn" onclick="selectTopup(this, 2000)">$2000</button>
+      <button class="topup-btn" onclick="selectTopup(this, 100)"><span class="amt">$100</span><span class="bonus">送$1</span></button>
+      <button class="topup-btn" onclick="selectTopup(this, 200)"><span class="amt">$200</span><span class="bonus">送$2</span></button>
+      <button class="topup-btn" onclick="selectTopup(this, 300)"><span class="amt">$300</span><span class="bonus">送$3</span></button>
+      <button class="topup-btn" onclick="selectTopup(this, 500)"><span class="amt">$500</span><span class="bonus">送$5</span></button>
+      <button class="topup-btn" onclick="selectTopup(this, 1000)"><span class="amt">$1000</span><span class="bonus">送$10</span></button>
+      <button class="topup-btn" onclick="selectTopup(this, 2000)"><span class="amt">$2000</span><span class="bonus">送$20</span></button>
     </div>
     <div class="input-group" style="margin-top:12px;">
       <label>或輸入自訂金額</label>
-      <input type="number" id="customTopupInput" placeholder="請輸入儲值金額" min="1" oninput="clearTopupSelection()">
+      <input type="number" id="customTopupInput" placeholder="請輸入儲值金額" min="1" oninput="handleCustomTopupInput()">
+    </div>
+    <div class="topup-preview" id="topupPreview">
+      儲值 $<span id="previewBase">0</span>　+　回饋 $<span id="previewBonus">0</span>
+      <div>實際入帳：<span class="final">$<span id="previewFinal">0</span></span></div>
     </div>
     <button id="topupSubmitBtn" onclick="submitTopup()">申請儲值</button>
 
@@ -389,6 +531,23 @@
       <p style="color:#a0aec0; font-size:14px;">載入中...</p>
     </div>
     <button class="btn-secondary" onclick="showPage('step1')">返回首頁</button>
+  </div>
+
+  </div><!-- /.ios-content -->
+
+  <div class="top-btn-row">
+    <button class="top-btn active" onclick="showPage('step1')">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></span>
+      快速下單
+    </button>
+    <button class="top-btn" onclick="showPage('walletPage')">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><circle cx="16.5" cy="14" r="1.4" fill="currentColor" stroke="none"/></svg></span>
+      我的錢包
+    </button>
+    <button class="top-btn" onclick="showPage('historyPage')">
+      <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
+      歷史訂單
+    </button>
   </div>
 
   <script>
@@ -860,16 +1019,41 @@
       }
     }
 
+    const TOPUP_BONUS_RATE = 0.01; // 儲值回饋比例 1%
+    function calcTopupBonus(amount) {
+      return Math.floor(amount * TOPUP_BONUS_RATE);
+    }
+
+    function updateTopupPreview(amount) {
+      const preview = document.getElementById("topupPreview");
+      if (!amount || amount <= 0) {
+        preview.classList.remove("show");
+        return;
+      }
+      const bonus = calcTopupBonus(amount);
+      document.getElementById("previewBase").innerText = amount;
+      document.getElementById("previewBonus").innerText = bonus;
+      document.getElementById("previewFinal").innerText = amount + bonus;
+      preview.classList.add("show");
+    }
+
     function selectTopup(btn, amount) {
       document.querySelectorAll('.topup-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedTopupAmount = amount;
       document.getElementById("customTopupInput").value = "";
+      updateTopupPreview(amount);
     }
 
     function clearTopupSelection() {
       document.querySelectorAll('.topup-btn').forEach(b => b.classList.remove('selected'));
       selectedTopupAmount = 0;
+    }
+
+    function handleCustomTopupInput() {
+      clearTopupSelection();
+      const val = parseInt(document.getElementById("customTopupInput").value) || 0;
+      updateTopupPreview(val);
     }
 
     async function submitTopup() {
@@ -899,10 +1083,12 @@
           })
         });
 
-        alert(`✅ 儲值申請已送出！\n金額：$${topupAmount}\n\n請依照客服指示完成付款後，老闆將為您加值。`);
+        const bonus = calcTopupBonus(topupAmount);
+        alert(`✅ 儲值申請已送出！\n儲值金額：$${topupAmount}\n加碼回饋：$${bonus}\n實際入帳：$${topupAmount + bonus}\n\n請依照客服指示完成付款後，老闆將為您加值。`);
         document.querySelectorAll('.topup-btn').forEach(b => b.classList.remove('selected'));
         document.getElementById("customTopupInput").value = "";
         selectedTopupAmount = 0;
+        updateTopupPreview(0);
 
         // 申請送出後自動返回 LINE 對話視窗
         if (liff.isInClient()) {

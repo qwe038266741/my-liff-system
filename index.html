@@ -496,8 +496,8 @@
     </div>
   </div>
 
-  <!-- ===== Step 1 ===== -->
-  <div id="step1" class="order-box" style="display: none;">
+  <!-- ===== Step 1（首頁：快速下單） ===== -->
+  <div id="step1" class="order-box">
     <div class="input-group">
       <label>請選擇遊戲/項目</label>
       <select id="gameSelect">
@@ -556,8 +556,8 @@
     <button class="btn-secondary" onclick="showPage('step1')">回上一頁修改</button>
   </div>
 
-  <!-- ===== 我的錢包（首頁） ===== -->
-  <div id="walletPage" class="order-box">
+  <!-- ===== 我的錢包 ===== -->
+  <div id="walletPage" class="order-box" style="display: none;">
     <div class="wallet-balance-card">
       <div class="wallet-balance-label">錢包餘額</div>
       <div>
@@ -617,11 +617,11 @@
   </div><!-- /.ios-content -->
 
   <div class="top-btn-row">
-    <button class="top-btn active" onclick="showPage('walletPage')">
+    <button class="top-btn" onclick="showPage('walletPage')">
       <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><circle cx="16.5" cy="14" r="1.4" fill="currentColor" stroke="none"/></svg></span>
       我的錢包
     </button>
-    <button class="top-btn" onclick="showPage('step1')">
+    <button class="top-btn active" onclick="showPage('step1')">
       <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></span>
       快速下單
     </button>
@@ -1363,8 +1363,9 @@
     function handleHistorySearch() { renderHistoryList(); }
 
     initializeLiff();
-    // 預設高亮第一個按鈕
-    document.querySelectorAll('.top-btn')[0].classList.add('active');
+    // 預設高亮「快速下單」按鈕（首頁）
+    document.querySelectorAll('.top-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.top-btn')[1].classList.add('active');
   </script>
 </body>
 </html>

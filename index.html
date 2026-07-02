@@ -1125,12 +1125,13 @@
       submitBtn.disabled = true;
 
       try {
-        await fetch(apiUrl, {
+        const res = await fetch(apiUrl, {
           method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
+          headers: { "Content-Type": "text/plain" }, // 保持 text/plain 可避免觸發 CORS 預檢
           body: JSON.stringify(payload)
         });
+        let resultData = null;
+        try { resultData = await res.json(); } catch (parseErr) { /* 忽略解析失敗，仍視為送出成功 */ }
 
         // 若使用餘額支付，本地先更新餘額顯示
         if (payment === "錢包餘額支付") {
@@ -1140,7 +1141,24 @@
         // 進度條顯示第三步「送出完成」，短暫停留後關閉或回首頁
         setProgressDone();
         await new Promise(r => setTimeout(r, 1200));
-        alert("🎉 訂單已成功送出！\n客服正在處理中，請稍候。");
+
+        // 網銀轉帳且屬於白名單客戶：附上收款帳號
+        if (payment === "網銀轉帳" && resultData && resultData.bankAccount) {
+          const b = resultData.bankAccount;
+          alert(
+            "🎉 訂單已成功送出！\n\n" +
+            "請於付款期限內完成轉帳：\n" +
+            "-------------------------\n" +
+            "銀行：" + (b.bank || "") + "\n" +
+            "帳號：" + (b.account || "") + "\n" +
+            "戶名：" + (b.name || "") + "\n" +
+            "-------------------------\n" +
+            "完成轉帳後請截圖給客服，感謝您！"
+          );
+        } else {
+          alert("🎉 訂單已成功送出！\n客服正在處理中，請稍候。");
+        }
+
         if (liff.isInClient()) {
           liff.closeWindow();
         } else {
